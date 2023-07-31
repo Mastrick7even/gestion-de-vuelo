@@ -20,6 +20,7 @@ NODO *crearNodo(const char *nombre, const char *destino, int numReserva, NODO *p
 NODO *insertarNodoABB(NODO *raiz, const char *nombre, const char *destino, int numReserva, NODO *padre);
 NODO *busquedaPorNumeroReserva(NODO *raiz, int numeroReserva);
 NODO *encontrarMinimo(NODO *raiz);
+void recorrerArbolBusquedaPorDestino(NODO *raiz, char destinoIngresado[50], int *contador);
 void eliminar(NODO *raiz, int numReserva);
 void eliminarNodo(NODO *raiz);
 void reemplazar(NODO *raiz, NODO *nuevoNodo);
@@ -27,14 +28,12 @@ void destruirNodo(NODO *nodo);
 void ordenarReservas(NODO *raiz);
 void liberarMemoria(NODO *raiz);
 void validacionArbolVacio();
-void busquedaPorDestino(NODO *raiz, char destino[50]);
-int recorrerArbolBusquedaPorDestino(NODO *raiz, char destinoIngresado[50], int *contador);
 //------------------------------------------------------------------------------
 int main()
 {
     srand(time(NULL));
     NODO *raiz = NULL;
-    int opcion, numReserva, i;
+    int opcion, numReserva, i, contadorNodos = 0;
     char nombre[50], destino[50];
     do
     {
@@ -56,7 +55,7 @@ int main()
             //-----------------Nombre------------------------
             printf("Cual es tu nombre honorable aventurero?\n>> ");
             fgets(nombre, sizeof(nombre), stdin);
-            nombre[strcspn(nombre, "\n")] = '\0';
+            nombre[strcspn(nombre, "\n")] = '\0'; // Eliminar el caracter "enter" al final de la entrada del usuario
 
             //-------------------Destino----------------------
             printf("Hacia donde emprendes tu camino, %s?\n>> ", nombre);
@@ -71,16 +70,23 @@ int main()
 
             // Insertamos el nuevo nodo al arbol
             raiz = insertarNodoABB(raiz, nombre, destino, numReserva, NULL);
+            contadorNodos++;
             break;
         case 2: // Cancelar reservas
             system("cls");
             if(raiz == NULL){
                 validacionArbolVacio(raiz);
             }
+            if(contadorNodos == 1){ //Condicional para borrar si solo queda un nodo en todo el arbol
+                liberarMemoria(raiz);
+                contadorNodos--;
+                raiz = NULL;
+            }
             else{
                 printf("Digite el numero de reserva para gestionar la cancelacion del viaje.\n>> ");
                 scanf("%d", &numReserva);
                 eliminar(raiz, numReserva);
+                contadorNodos--;
                 getch();
             }
             break;
@@ -100,7 +106,17 @@ int main()
                     destino[i] = toupper(destino[i]);
                 }
                 printf("Reservas que viajan con destino a: %s\n\n", destino);
-                busquedaPorDestino(raiz, destino);
+
+                int contador = 0;
+                recorrerArbolBusquedaPorDestino(raiz, destino, &contador);
+                if (contador == 0)
+                {
+                    printf("\nNo existen reservas que viajan a ese destino.");
+                }
+                else
+                {
+                    printf("Busqueda exitosa.");
+                }
                 getch();
             }
             break;
@@ -186,25 +202,7 @@ NODO *insertarNodoABB(NODO *raiz, const char *nombre, const char *destino, int n
     return raiz; // Retornar el puntero al nodo actual (sin cambios)
 }
 
-void busquedaPorDestino(NODO *raiz, char destino[50])
-{
-    int contador = 0;
-    if (raiz == NULL)
-    {
-        printf("No existen viajes reservados.");
-    }
-    recorrerArbolBusquedaPorDestino(raiz, destino, &contador);
-    if (contador == 0)
-    {
-        printf("\nNo existen reservas que viajan a ese destino.");
-    }
-    else
-    {
-        printf("Busqueda exitosa.");
-    }
-}
-
-int recorrerArbolBusquedaPorDestino(NODO *raiz, char destinoIngresado[50], int *contador)
+void recorrerArbolBusquedaPorDestino(NODO *raiz, char destinoIngresado[50], int *contador)
 {
     int i;
     char copiaTemporal[50] = ""; // Inicializar el string vacio
@@ -266,6 +264,7 @@ void eliminar(NODO *raiz, int numReserva)
     else
     {
         eliminarNodo(raiz);
+        printf("\nReserva cancelada.");
     }
 }
 
