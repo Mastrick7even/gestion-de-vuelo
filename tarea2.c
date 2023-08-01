@@ -28,12 +28,13 @@ void destruirNodo(NODO *nodo);
 void ordenarReservas(NODO *raiz);
 void liberarMemoria(NODO *raiz);
 void validacionArbolVacio();
+int validarNumReservaRepetido(NODO *raiz, int numeroReserva);
 //------------------------------------------------------------------------------
 int main()
 {
     srand(time(NULL));
     NODO *raiz = NULL;
-    int opcion, numReserva, i, contadorNodos = 0;
+    int opcion, numReserva, i, bandera, contadorNodos = 0;
     char nombre[50], destino[50];
     do
     {
@@ -63,11 +64,28 @@ int main()
             destino[strcspn(destino, "\n")] = '\0';
 
             //-------------------Numero reserva--------------
-            numReserva = rand() % 900 + 100;
             system("cls");
-            printf("Ya estas anotado! Tu numero de reserva es el %d.\nQue tengas un buen viaje, %s!", numReserva, nombre);
-            getch();
-
+            //numReserva = rand() % 900 + 100;
+            do{
+                printf("Ingresa un token de 3 digitos para guardar tu reserva.\n>> ");
+                scanf("%d", &numReserva);
+                if(numReserva < 100 || numReserva > 999){
+                    printf("Recuerda que debes ingresar un token de 3 digitos, intenta nuevamente.\n\nPresiona para continuar...");
+                    getch();
+                    system("cls");
+                } else{
+                    bandera = validarNumReservaRepetido(raiz, numReserva);
+                    if(bandera == 1){
+                        printf("Numero de reserva ya existe, intenta ingresando uno distinto.\n\nPresiona para continuar...");
+                        getch();
+                        system("cls");
+                    } else{
+                        printf("Ya estas anotado! Que tengas un buen viaje, %s!", nombre);
+                        getch();
+                    }
+                }  
+            }while((numReserva < 100 || numReserva > 1000) || bandera == 1); //Condicion para que el token solo sea de 3 digitos
+            
             // Insertamos el nuevo nodo al arbol
             raiz = insertarNodoABB(raiz, nombre, destino, numReserva, NULL);
             contadorNodos++;
@@ -126,10 +144,15 @@ int main()
                 validacionArbolVacio(raiz);
             }
             else{
-                int numeroReserva;
+                int numeroReserva, bool;
                 printf("Ingrese un numero de reserva para buscar si existe un viaje asociado.\n>> ");
                 scanf("%d", &numeroReserva);
-                busquedaPorNumeroReserva(raiz, numeroReserva);
+                bool = busquedaPorNumeroReserva(raiz, numeroReserva);
+                if(bool == 0){
+
+                } else {
+
+                }
                 getch();
             }
             
@@ -243,6 +266,27 @@ NODO *busquedaPorNumeroReserva(NODO *raiz, int numeroReserva)
         printf("Busqueda existosa, datos de la reserva a continuacion.\n\n");
         printf("Nombre aventurero: %s.\n", raiz->nombre);
         printf("Destino: %s.\n\n", raiz->destino);
+        return TRUE;
+    }
+}
+
+int validarNumReservaRepetido(NODO *raiz, int numeroReserva)
+{
+    if (raiz == NULL)
+    {
+        return FALSE;
+    }
+    else if (numeroReserva > raiz->numReserva)
+    {
+        return validarNumReservaRepetido(raiz->right, numeroReserva);
+    }
+    else if (numeroReserva < raiz->numReserva)
+    {
+        return validarNumReservaRepetido(raiz->left, numeroReserva);
+    }
+    else
+    {
+        return TRUE;
     }
 }
 
