@@ -18,13 +18,9 @@ typedef struct nodoarbol
 //----------------------Prototipo de funciones----------------------------------
 NODO *crearNodo(const char *nombre, const char *destino, int numReserva, NODO *padre);
 NODO *insertarNodoABB(NODO *raiz, const char *nombre, const char *destino, int numReserva, NODO *padre);
-NODO *busquedaPorNumeroReserva(NODO *raiz, int numeroReserva);
-NODO *encontrarMinimo(NODO *raiz);
+NODO *eliminarNodoABB(NODO *raiz, int numeroReserva);
+NODO *busquedaPorNumeroReserva2(NODO *raiz, int numeroReserva);
 void recorrerArbolBusquedaPorDestino(NODO *raiz, char destinoIngresado[50], int *contador);
-void eliminar(NODO *raiz, int numReserva);
-void eliminarNodo(NODO *raiz);
-void reemplazar(NODO *raiz, NODO *nuevoNodo);
-void destruirNodo(NODO *nodo);
 void ordenarReservas(NODO *raiz);
 void liberarMemoria(NODO *raiz);
 void validacionArbolVacio();
@@ -34,19 +30,42 @@ int main()
 {
     srand(time(NULL));
     NODO *raiz = NULL;
-    int opcion, numReserva, i, bandera, contadorNodos = 0;
+    NODO *nodoEncontrado;
+    int opcion, numReserva, i, bandera;
     char nombre[50], destino[50];
     do
     {
         system("cls");
-        printf("Selecciones una accion a realizar: \n");
-        printf("1. Realizar reservas de vuelo.\n");
-        printf("2. Cancelar reservas.\n");
-        printf("3. Buscar reserva por destino\n");
-        printf("4. Buscar viaje por numero de reserva.\n");
-        printf("5. Mostrar reservas ordenadas.\n");
-        printf("6. Salir.\n");
-        printf(">> ");
+    printf("\033[0;31m");
+    printf("                ^    ^\n");
+    printf("               / \\  //\\\n");
+    printf("     |\\___/|      /   \\//  .\\\n");
+    printf("     /O  O  \\__  /    //  | \\ \\\n");
+    printf("    /     /  \\/_/    //   |  \\  \\\n");
+    printf("   @___@'    \\/_   //    |   \\   \\\n");
+    printf("      |       \\/_ //     |    \\    \\\n");
+    printf("      |        \\///      |     \\     \\\n");
+    printf("     _|_ /   )  //       |      \\     _\\\n");
+    printf("   '/,_ _ _/  ( ; -.    |    _ _\\.-~        .-~~~^-. \n");
+    printf("   ,-{        _      `-.|.-~-.           .~         `. \n");
+    printf("    '/\\      /                 ~-. _ .-~      .-~^-.  \\ \n");
+    printf("       `.   {            }                   /      \\  \\ \n");
+    printf("     .----~-.\\        \\-'                 .~         \\  `. \\^-.\n");
+    printf("    ///.----..>    c   \\             _ -~             `.  ^-`   ^-_ \n");
+    printf("      ///-._ _ _ _ _ _ _}^ - - - - ~                     ~--,   .-~ \n");
+    printf("                                                            /.-'\n");
+    printf("\033[0m");
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    printf("          MENU DE RESERVAS AVENTURERAS\n");
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    printf(" 1. Realizar reservas de vuelo.\n");
+    printf(" 2. Cancelar reservas.\n");
+    printf(" 3. Buscar reserva por destino.\n");
+    printf(" 4. Buscar viaje por numero de reserva.\n");
+    printf(" 5. Mostrar reservas ordenadas.\n");
+    printf(" 6. Salir.\n");
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    printf(">> ");
         scanf("%d", &opcion);
         getchar();
         switch (opcion)
@@ -88,23 +107,28 @@ int main()
             
             // Insertamos el nuevo nodo al arbol
             raiz = insertarNodoABB(raiz, nombre, destino, numReserva, NULL);
-            contadorNodos++;
             break;
         case 2: // Cancelar reservas
             system("cls");
-            if(raiz == NULL){
+            if (raiz == NULL)
+            {
                 validacionArbolVacio(raiz);
             }
-            if(contadorNodos == 1){ //Condicional para borrar si solo queda un nodo en todo el arbol
-                liberarMemoria(raiz);
-                contadorNodos--;
-                raiz = NULL;
-            }
-            else{
+            else
+            {
+                printf("Reservas ingresadas al sistema:\n\n");
+                ordenarReservas(raiz);
                 printf("Digite el numero de reserva para gestionar la cancelacion del viaje.\n>> ");
                 scanf("%d", &numReserva);
-                eliminar(raiz, numReserva);
-                contadorNodos--;
+                nodoEncontrado = busquedaPorNumeroReserva2(raiz, numReserva);
+                if (nodoEncontrado == NULL){
+                    printf("El numero de reserva no existe.\n");
+                }
+                else
+                {
+                    raiz = eliminarNodoABB(raiz, numReserva);
+                    printf("Reserva cancelada exitosamente.\n");
+                }
                 getch();
             }
             break;
@@ -147,12 +171,19 @@ int main()
                 int numeroReserva, bool;
                 printf("Ingrese un numero de reserva para buscar si existe un viaje asociado.\n>> ");
                 scanf("%d", &numeroReserva);
-                bool = busquedaPorNumeroReserva(raiz, numeroReserva);
-                if(bool == 0){
-
-                } else {
-
+                nodoEncontrado = busquedaPorNumeroReserva2(raiz, numReserva);
+                if (nodoEncontrado == NULL){
+                    printf("El numero de reserva no existe.\n");
                 }
+                else
+                {
+                    printf("\nBusqueda existosa, datos de la reserva N%c%d a continuacion.\n", 167, numReserva);
+                    printf("+---------------------------------------------------------------+\n");
+                    printf("| Nombre aventurero: %s\n", nodoEncontrado->nombre);
+                    printf("| Destino: %s\n", nodoEncontrado->destino);
+                    printf("+---------------------------------------------------------------+\n\n");
+                }
+                printf("Presione un tecla para continuar...");
                 getch();
             }
             
@@ -160,13 +191,12 @@ int main()
         case 5: // Mostrar reservas ordenadas
             if (raiz == NULL)
             {
-                system("cls");
-                printf("No existen reservas generadas recientemente :(");
-                getch();
+                validacionArbolVacio(raiz);
             }
             else
             {
-                printf("\nLas reservas ordenadas ascendentemente: ");
+                system("cls");
+                printf("\nLas reservas ordenadas ascendentemente: \n\n");
                 ordenarReservas(raiz);
                 getch();
             }
@@ -225,6 +255,66 @@ NODO *insertarNodoABB(NODO *raiz, const char *nombre, const char *destino, int n
     return raiz; // Retornar el puntero al nodo actual (sin cambios)
 }
 
+NODO *eliminarNodoABB(NODO *raiz, int numeroReserva)
+{
+    if (raiz == NULL)
+    {
+        return NULL; // El nodo no existe
+    }
+
+    // Buscar el nodo con el número de reserva
+    if (numeroReserva < raiz->numReserva)
+    {
+        raiz->left = eliminarNodoABB(raiz->left, numeroReserva);
+    }
+    else if (numeroReserva > raiz->numReserva)
+    {
+        raiz->right = eliminarNodoABB(raiz->right, numeroReserva);
+    }
+    else
+    {
+        // Caso 1: El nodo es una hoja (no tiene hijos)
+        if (raiz->left == NULL && raiz->right == NULL)
+        {
+            free(raiz);
+            return NULL;
+        }
+        // Caso 2: El nodo tiene solo un hijo (izquierdo o derecho)
+        else if (raiz->left == NULL)
+        {
+            NODO *temp = raiz->right;
+            free(raiz);
+            return temp;
+        }
+        else if (raiz->right == NULL)
+        {
+            NODO *temp = raiz->left;
+            free(raiz);
+            return temp;
+        }
+        // Caso 3: El nodo tiene dos hijos
+        else
+        {
+            // Encontrar el sucesor inorden (nodo con valor más pequeño en el subárbol derecho)
+            NODO *sucesor = raiz->right;
+            while (sucesor->left != NULL)
+            {
+                sucesor = sucesor->left;
+            }
+
+            // Copiar el valor del sucesor al nodo actual
+            raiz->numReserva = sucesor->numReserva;
+            strcpy(raiz->nombre, sucesor->nombre);
+            strcpy(raiz->destino, sucesor->destino);
+
+            // Eliminar el sucesor inorden
+            raiz->right = eliminarNodoABB(raiz->right, sucesor->numReserva);
+        }
+    }
+    return raiz;
+}
+
+
 void recorrerArbolBusquedaPorDestino(NODO *raiz, char destinoIngresado[50], int *contador)
 {
     int i;
@@ -237,8 +327,10 @@ void recorrerArbolBusquedaPorDestino(NODO *raiz, char destinoIngresado[50], int 
         }
         if (strcmp(copiaTemporal, destinoIngresado) == 0)
         {
-            printf("Nombre aventurero: %s.\n", raiz->nombre);
-            printf("N%c de reserva: %d.\n\n", 167, raiz->numReserva);
+            printf("+---------------------------------------------+\n");
+            printf("| Nombre del aventurero: %s \n", raiz->nombre);
+            printf("| N%c de reserva: %d          \n", 167, raiz->numReserva);
+            printf("+---------------------------------------------+\n\n");
             (*contador)++; // Aumentar el valor del contador en uno (puntero), dado que es una funcion void
         }
         recorrerArbolBusquedaPorDestino(raiz->left, destinoIngresado, contador);
@@ -246,27 +338,24 @@ void recorrerArbolBusquedaPorDestino(NODO *raiz, char destinoIngresado[50], int 
     }
 }
 
-NODO *busquedaPorNumeroReserva(NODO *raiz, int numeroReserva)
+NODO *busquedaPorNumeroReserva2(NODO *raiz, int numeroReserva)
 {
     if (raiz == NULL)
     {
         printf("No existen viajes asociados al numero de reserva ingresado.\n\n");
-        return FALSE;
+        return NULL;
     }
     else if (numeroReserva > raiz->numReserva)
     {
-        return busquedaPorNumeroReserva(raiz->right, numeroReserva);
+        return busquedaPorNumeroReserva2(raiz->right, numeroReserva);
     }
     else if (numeroReserva < raiz->numReserva)
     {
-        return busquedaPorNumeroReserva(raiz->left, numeroReserva);
+        return busquedaPorNumeroReserva2(raiz->left, numeroReserva);
     }
     else
     {
-        printf("Busqueda existosa, datos de la reserva a continuacion.\n\n");
-        printf("Nombre aventurero: %s.\n", raiz->nombre);
-        printf("Destino: %s.\n\n", raiz->destino);
-        return TRUE;
+        return raiz; // Retornar el puntero al nodo encontrado
     }
 }
 
@@ -290,105 +379,9 @@ int validarNumReservaRepetido(NODO *raiz, int numeroReserva)
     }
 }
 
-void eliminar(NODO *raiz, int numReserva)
-{
-    if (raiz == NULL)
-    {
-        printf("No existen reservas asociadas a su busqueda.");
-        return;
-    }
-    else if (numReserva > raiz->numReserva)
-    {
-        return eliminar(raiz->right, numReserva);
-    }
-    else if (numReserva < raiz->numReserva)
-    {
-        return eliminar(raiz->left, numReserva);
-    }
-    else
-    {
-        eliminarNodo(raiz);
-        printf("\nReserva cancelada.");
-    }
-}
-
-// Para reemplazar un nodo por otro
-void reemplazar(NODO *raiz, NODO *nuevoNodo)
-{
-    if (raiz->padre != NULL)
-    { // Hay que asignarle su nuevo hijo al raiz->padre
-        if (raiz->numReserva == raiz->padre->left->numReserva)
-        {
-            raiz->padre->left = nuevoNodo;
-        } // para cuando el nodo tenga un hijo izquierdo
-        else if (raiz->numReserva == raiz->padre->right->numReserva)
-        {
-            raiz->padre->right = nuevoNodo;
-        } // para cuando el nodo tenga un hijo derecho
-    }
-    if (nuevoNodo != NULL)
-    { // Hay que asignarle su nuevo padre
-        nuevoNodo->padre = raiz->padre;
-    }
-}
-
-// Destruir NODO
-void destruirNodo(NODO *nodo)
-{
-    nodo->left = NULL;
-    nodo->right = NULL;
-    free(nodo);
-}
-
-// Eliminar el nodo encontrado
-void eliminarNodo(NODO *nodoEliminar)
-{
-    // caso eliminar nodos con dos hijos
-    if ((nodoEliminar->left != NULL) && (nodoEliminar->right != NULL))
-    {
-        NODO *menor = encontrarMinimo(nodoEliminar->right);
-        nodoEliminar->numReserva = menor->numReserva;
-        eliminarNodo(menor);
-    }
-    
-    else if (nodoEliminar->left != NULL)// caso eliminar nodos con un solo hijo por izquierda
-    {
-        reemplazar(nodoEliminar, nodoEliminar->left);
-        destruirNodo(nodoEliminar);
-        
-    }
-    else if (nodoEliminar->right != NULL)// caso eliminar nodos con un solo hijo por derecha
-    {
-        reemplazar(nodoEliminar, nodoEliminar->right);
-        destruirNodo(nodoEliminar);
-    }
-    else
-    { // caso eliminar nodos hoja
-        reemplazar(nodoEliminar, NULL);
-        destruirNodo(nodoEliminar);
-    }
-}
-
-// Funcion para determinar el nodo mas a la izquierda posible (predecesor)
-NODO *encontrarMinimo(NODO *raiz)
-{
-    if (raiz == NULL)// si el arbol esta vacio
-    {                
-        return NULL; // retorno nulo
-    }
-    if (raiz->left)// si tiene hijo izquierdo
-    {                                       
-        return encontrarMinimo(raiz->left); // bajamos hasta el hijo mas izquierdo posible
-    }
-    else
-    {
-        return raiz;
-    }
-}
-
 void validacionArbolVacio(){
     system("cls");
-    printf("No existen reservas generadas recientemente :(");
+    printf("No existen reservas generadas :(");
     getch();
 }
 
@@ -398,7 +391,11 @@ void ordenarReservas(NODO *raiz)
     if (raiz != NULL)
     {
         ordenarReservas(raiz->left);
-        printf(" %d ", raiz->numReserva);
+        printf("+---------------------------------------------+\n");
+        printf("| N%c de reserva: %d          \n", 167, raiz->numReserva);
+        printf("| Nombre del aventurero: %s \n", raiz->nombre);
+        printf("| Destino: %s\n", raiz->destino);
+        printf("+---------------------------------------------+\n\n");
         ordenarReservas(raiz->right);
     }
 }
